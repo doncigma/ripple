@@ -1,0 +1,280 @@
+﻿<Window x:Class="ripple.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        xmlns:local="clr-namespace:ripple"
+        mc:Ignorable="d"
+        Title="Ripple" Height="100" Width="300"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        >
+
+    <!--Styles-->
+    <Window.Resources>
+        <Style x:Key="IconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Width" Value="50" />
+            <Setter Property="Height" Value="50" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" 
+                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                          />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="BarIconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" 
+                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                          />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="GhostWhite" />
+            <Setter Property="FontFamily" Value="Roboto" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="IconStyle" TargetType="fa:ImageAwesome">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Foreground" Value="GhostWhite" />
+        </Style>
+
+        <Style x:Key="SmallIconStyle" TargetType="fa:ImageAwesome">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Foreground" Value="GhostWhite" />
+        </Style>
+        
+        <Style x:Key="BarIconStyle" TargetType="fa:ImageAwesome">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Foreground" Value="GhostWhite" />
+        </Style>
+
+        <!--Slider Style-->
+        <!--<Style x:Key="SeekerStyle2" TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Border x:Name="TrackBackground"
+                            Height="4"
+                            Background="#444"
+                            CornerRadius="2"
+                            VerticalAlignment="Center"/>
+
+                            <Rectangle x:Name="ProgressFill"
+                               Height="4"
+                               Fill="White"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Center"
+                               RadiusX="2" RadiusY="2"
+                               Width="50"/>
+
+                            <Thumb x:Name="PART_TrackThumb"
+                           Width="10" Height="20"
+                           Background="White"
+                           BorderThickness="0"
+                           VerticalAlignment="Center"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>-->
+    </Window.Resources>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="0" CornerRadius="20" CaptionHeight="0" />
+    </WindowChrome.WindowChrome>
+
+    <!--Window Layout-->
+    <Grid x:Name="MainGrid" Background="#1a1a1a">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+
+        <!--Custom Window Bar-->
+        <DockPanel x:Name="SettingsStack" Grid.Row="0" HorizontalAlignment="Center" Width="300">
+            <!--Settings Menu-->
+            <Menu x:Name="SettingsMenu" Height="20" Width="24"
+                  Background="#1a1a1a"
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Center"
+                  Margin="5,0,0,0"
+                  DockPanel.Dock="Left"
+                  >
+                <MenuItem Cursor="Hand">
+                    <MenuItem.Icon>
+                        <Viewbox>
+                            <Path Fill="LightGray"
+                                Data="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z" 
+                                Stretch="Fill"
+                                />
+                        </Viewbox>
+                    </MenuItem.Icon>
+
+                    <!--Size One-->
+                    <Button x:Name="Tiny" Content="Tiny" Foreground="Black" Click="Tiny_Click" />
+                    <!--Size Two-->
+                    <Button x:Name="Mini" Content="Small" Foreground="Black" Click="Small_Click" />
+                </MenuItem>
+            </Menu>
+
+            <TextBlock x:Name="WindowTitle" HorizontalAlignment="Left" VerticalAlignment="Center" 
+                       Text="Ripple" FontSize="11" Margin="5,0,0,0"
+                       />
+
+            <!--Window Controls-->
+            <StackPanel x:Name="WindowControlsStack" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                        Orientation="Horizontal" 
+                        DockPanel.Dock="Right"
+                        Margin="0,0,5,0"
+                        >
+                <Button x:Name="MinimizeButton" Click="MinimizeButton_Click" Style="{StaticResource BarIconButtonStyle}" Cursor="Hand">
+                    <fa:ImageAwesome Icon="WindowMinimize" Style="{StaticResource BarIconStyle}" />
+                </Button>
+                <Button x:Name="CloseButton" Click="CloseButton_Click" Style="{StaticResource BarIconButtonStyle}" Cursor="Hand">
+                    <fa:ImageAwesome Icon="Close" Style="{StaticResource BarIconStyle}" />
+                </Button>
+            </StackPanel>
+        </DockPanel>
+
+        <!--Metadata Display-->
+        <Border Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
+                Background="#57565b" BorderThickness="0" BorderBrush="Black"
+                >
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
+                <TextBlock HorizontalAlignment="Center" x:Name="SongTitleBox" FontFamily="Roboto Bold" Text="Title" />
+                <TextBlock HorizontalAlignment="Center" x:Name="SongArtistBox" FontSize="11" Text="Artist" />
+            </StackPanel>
+        </Border>
+
+
+        <!--Seeker-->
+        <Border Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                Background="#1a1a1a" BorderThickness="0" BorderBrush="Black" CornerRadius="0"
+                >
+            <!--<StackPanel HorizontalAlignment="Center"  Orientation="Horizontal">
+                <TextBlock x:Name="SongStartMin" Text="0"/>
+                <TextBlock Text=":"/>
+                <TextBlock x:Name="SongStartSec" Text="00"/>
+                <Slider Style="{DynamicResource SeekerStyle2}" 
+                    x:Name="Seeker"
+                    ValueChanged="Seeker_ValueChanged"
+                    Width="225"
+                    Thumb.DragStarted="Seeker_DragStarted"
+                    Thumb.DragCompleted="Seeker_DragCompleted"
+                    />--><!--
+                <ProgressBar x:Name="Seeker"
+                             Width="200"
+                             Height="4"
+                             VerticalAlignment="Center"
+                             Background="#57565b"
+                             Foreground="#b88864"
+                             />
+                <TextBlock x:Name="SongEndMin" Text="0"/>
+                <TextBlock Text=":"/>
+                <TextBlock x:Name="SongEndSec" Text="00"/>
+
+            </StackPanel>-->
+            <Grid x:Name="SeekerGrid" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="50" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" 
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            >
+                    <TextBlock x:Name="SongStartMin" Text="0"/>
+                    <TextBlock Text=":"/>
+                    <TextBlock x:Name="SongStartSec" Text="00"/>
+                </StackPanel>
+                
+                <!--<Slider Style="{DynamicResource SeekerStyle2}" 
+                    x:Name="Seeker"
+                    ValueChanged="Seeker_ValueChanged"
+                    Width="225"
+                    Thumb.DragStarted="Seeker_DragStarted"
+                    Thumb.DragCompleted="Seeker_DragCompleted"
+                    />-->
+                <ProgressBar x:Name="Seeker"
+                             Grid.Column="1"
+                             Width="200"
+                             Height="4"
+                             VerticalAlignment="Center"
+                             Background="#57565b"
+                             Foreground="GhostWhite"
+                             />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" 
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            >
+                    <TextBlock x:Name="SongEndMin" Text="0"/>
+                    <TextBlock Text=":"/>
+                    <TextBlock x:Name="SongEndSec" Text="00"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!--Playback Controls-->
+        <Border Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                    Background="#57565b" BorderThickness="0" BorderBrush="Black"
+                    >
+            <!--Playback buttons-->
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button x:Name="ShuffleButton" Style="{StaticResource IconButtonStyle}" Click="ShuffleButton_Click" Cursor="Hand">
+                    <fa:ImageAwesome x:Name="ShuffleButtonIcon" Icon="Random" Style="{StaticResource SmallIconStyle}" />
+                </Button>
+
+                <Button x:Name="SkipPreviousButton" Style="{StaticResource IconButtonStyle}" Click="SkipPreviousButton_Click" Cursor="Hand">
+                    <fa:ImageAwesome x:Name="SkipPreviousButtonIcon" Icon="StepBackward" Style="{StaticResource SmallIconStyle}" />
+                </Button>
+
+                <Button x:Name="TogglePlayPauseButton" Style="{StaticResource IconButtonStyle}" Click="TogglePlayPauseButton_Click" Cursor="Hand">
+                    <fa:ImageAwesome x:Name="TogglePlayButtonIcon" Icon="Play" Style="{StaticResource IconStyle}" />
+                </Button>
+
+                <Button x:Name="SkipNextButton" Style="{StaticResource IconButtonStyle}" Click="SkipNextButton_Click" Cursor="Hand">
+                    <fa:ImageAwesome x:Name="SkipNextButtonIcon" Icon="StepForward" Style="{StaticResource SmallIconStyle}" />
+                </Button>
+
+                <Button x:Name="RepeatButton" Style="{StaticResource IconButtonStyle}" Click="RepeatButton_Click" Cursor="Hand">
+                    <fa:ImageAwesome x:Name="RepeatButtonIcon" Icon="Refresh" Style="{StaticResource SmallIconStyle}" />
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
