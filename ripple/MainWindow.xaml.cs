@@ -20,15 +20,14 @@ namespace ripple
         private bool _shuffleEnabled;
         private bool _skipPrevEnabled;
         private bool _playPauseEnabled;
-        private bool _seekEnabled;
         private bool _skipNextEnabled;
         private bool _repeatEnabled;
 
-        // Shuffle and Repeat states
+        /*//Shuffle and Repeat states
         private bool _shuffleState;
-        private MediaPlaybackAutoRepeatMode RepeatState { get; set; }
+        private MediaPlaybackAutoRepeatMode RepeatState { get; set; }*/
 
-        // Timer to keep the timeline moving once per second
+        // Timer to manually track song progress
         private readonly DispatcherTimer _songTimer;
 
         public MainWindow()
@@ -37,7 +36,7 @@ namespace ripple
             Topmost = true;
 
             _songTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
-            _songTimer.Tick += (_, __) => UpdateTimelinePosition(); // Hook the timer that drives the progress bar
+            _songTimer.Tick += (_, __) => UpdateTimelinePosition();
 
             // Custom window
             async void InitializeMediaSession()
@@ -45,14 +44,15 @@ namespace ripple
                 try
                 {
                     _sessionManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-                    if (_sessionManager == null) { throw new Exception("Could not initialize session manager. MainWindow.xaml.cs:MainWindow()"); }
+                    if (_sessionManager == null) 
+                        throw new Exception("Could not initialize session manager. MainWindow.xaml.cs:MainWindow()");
 
                     _sessionManager.CurrentSessionChanged += OnCurrentSessionChanged;
 
                     _currentSession = _sessionManager.GetCurrentSession();
-
                     if (_currentSession != null)
                     {
+                        // Hook event handlers
                         _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
                         _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
                         _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
@@ -68,6 +68,7 @@ namespace ripple
                         var mediaProperties = await _currentSession.TryGetMediaPropertiesAsync()
                             ?? throw new Exception("Could not intialize media properties. MainWindow.xaml.cs:MainWindow()");
 
+                        // Setup icons
                         FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
                         if (playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
                             icon = FontAwesome.WPF.FontAwesomeIcon.Pause;
@@ -92,71 +93,7 @@ namespace ripple
             UpdateTimeline();
         }
 
-        private void UpdateVisibility()
-        {
-            var playbackInfo = _currentSession?.GetPlaybackInfo();
-            _controls = playbackInfo?.Controls;
-
-            if (_controls != null)
-            {
-                _shuffleEnabled = _controls.IsShuffleEnabled;
-                _skipPrevEnabled = _controls.IsPreviousEnabled;
-                _seekEnabled = _controls.IsPlaybackPositionEnabled;
-                _playPauseEnabled = _controls.IsPlayPauseToggleEnabled;
-                _skipNextEnabled = _controls.IsNextEnabled;
-                _repeatEnabled = _controls.IsRepeatEnabled;
-            }
-            else
-            {
-                _shuffleEnabled = false;
-                _skipPrevEnabled = false;
-                _seekEnabled = false;
-                _skipNextEnabled = false;
-                _repeatEnabled = false;
-            }
-
-            Visibility shuffleVis = Visibility.Hidden;
-            Visibility skipPrevVis = Visibility.Hidden;
-            Visibility playPauseVis = Visibility.Hidden;
-            Visibility seekerVis = Visibility.Hidden;
-            Visibility skipNextVis = Visibility.Hidden;
-            Visibility repeatVis = Visibility.Hidden;
-
-            // Shuffle
-            if (_shuffleEnabled) { shuffleVis = Visibility.Visible; }
-            else if (!_shuffleEnabled) { shuffleVis = Visibility.Hidden; }
-
-            // Skip prev
-            if (_skipPrevEnabled) { skipPrevVis = Visibility.Visible; }
-            else if (!_shuffleEnabled) { skipPrevVis = Visibility.Hidden; }
-
-            // Play pause
-            if (_playPauseEnabled) { playPauseVis = Visibility.Visible; }
-            else if (!_playPauseEnabled) { playPauseVis = Visibility.Hidden; }
-
-            // Seeker
-            if (_seekEnabled) { seekerVis = Visibility.Visible; }
-            else if (!_seekEnabled) { seekerVis = Visibility.Hidden; }
-
-            // Skip next
-            if (_skipNextEnabled) { skipNextVis = Visibility.Visible; }
-            else if (!_skipNextEnabled) { skipNextVis = Visibility.Hidden; }
-
-            // Repeat
-            if (_repeatEnabled) { repeatVis = Visibility.Visible; }
-            else if (!_repeatEnabled) { repeatVis = Visibility.Hidden; }
-
-            Dispatcher.Invoke(() =>
-            {
-                ShuffleButton.Visibility = shuffleVis;
-                SkipPreviousButton.Visibility = skipPrevVis;
-                TogglePlayPauseButton.Visibility = playPauseVis;
-                Seeker.Visibility = seekerVis;
-                SkipNextButton.Visibility = skipNextVis;
-                RepeatButton.Visibility = repeatVis;
-            });
-        }
-
+        // Window Controls
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             BeginAnimation(LeftProperty, null);
@@ -258,18 +195,85 @@ namespace ripple
             WindowState = WindowState.Minimized;
         }
 
-        private bool PingShuffle()
+        private void Tiny_Click(object sender, RoutedEventArgs e)
         {
-            _shuffleState = !_shuffleState;
-            return _shuffleState;
+            // Window
+            Height = 100;
+            Width = 300;
+
+            // Main grid
+            MainGrid.RowDefinitions.Clear();
+            RowDefinition row1 = new() { Height = new GridLength(20) };
+            RowDefinition row2 = new() { Height = new GridLength(30) };
+            RowDefinition row3 = new() { Height = new GridLength(20) };
+            RowDefinition row4 = new() { Height = new GridLength(30) };
+            MainGrid.RowDefinitions.Add(row1);
+            MainGrid.RowDefinitions.Add(row2);
+            MainGrid.RowDefinitions.Add(row3);
+            MainGrid.RowDefinitions.Add(row4);
+
+            // Title bar
+            SettingsMenu.Margin = new Thickness(0, 0, 0, 0);
+            SettingsStack.Width = Width;
+            WindowTitle.FontSize = 11;
+            WindowTitle.Margin = new Thickness(5, 0, 0, 0);
+            WindowControlsStack.Margin = new Thickness(0, 0, 5, 0);
+
+            // Metadata
+            SongTitleBox.FontSize = 12;
+            SongArtistBox.FontSize = 11;
+
+            // Seeker
+            SeekerGrid.ColumnDefinitions.Clear();
+            ColumnDefinition col1 = new() { Width = new GridLength(50) };
+            ColumnDefinition col2 = new() { Width = new GridLength(200) };
+            ColumnDefinition col3 = new() { Width = new GridLength(50) };
+            SeekerGrid.ColumnDefinitions.Add(col1);
+            SeekerGrid.ColumnDefinitions.Add(col2);
+            SeekerGrid.ColumnDefinitions.Add(col3);
+            Seeker.Width = 200;
         }
 
-        private MediaPlaybackAutoRepeatMode? PingRepeat()
+        private void Small_Click(object sender, RoutedEventArgs e)
         {
-            //MediaPlaybackAutoRepeatMode mode = (_repeatState + 1);
-            return ++RepeatState;
+            // Window
+            Height = 150;
+            Width = 350;
+
+            // Main grid
+            MainGrid.RowDefinitions.Clear();
+            RowDefinition row1 = new() { Height = new GridLength(30) };
+            RowDefinition row2 = new() { Height = new GridLength(50) };
+            RowDefinition row3 = new() { Height = new GridLength(30) };
+            RowDefinition row4 = new() { Height = new GridLength(40) };
+            MainGrid.RowDefinitions.Add(row1);
+            MainGrid.RowDefinitions.Add(row2);
+            MainGrid.RowDefinitions.Add(row3);
+            MainGrid.RowDefinitions.Add(row4);
+
+            // Title bar
+            SettingsMenu.Margin = new Thickness(10, 0, 10, 0);
+            SettingsStack.Width = Width;
+            WindowTitle.FontSize = 12;
+            WindowTitle.Margin = new Thickness(0, 0, 0, 0);
+            WindowControlsStack.Margin = new Thickness(0, 0, 10, 0);
+
+            // Metadata
+            SongTitleBox.FontSize = 14;
+            SongArtistBox.FontSize = 12;
+
+            // Seeker
+            SeekerGrid.ColumnDefinitions.Clear();
+            ColumnDefinition col1 = new() { Width = new GridLength(50) };
+            ColumnDefinition col2 = new() { Width = new GridLength(250) };
+            ColumnDefinition col3 = new() { Width = new GridLength(50) };
+            SeekerGrid.ColumnDefinitions.Add(col1);
+            SeekerGrid.ColumnDefinitions.Add(col2);
+            SeekerGrid.ColumnDefinitions.Add(col3);
+            Seeker.Width = 250;
         }
 
+        // Playback Events
         private void OnCurrentSessionChanged(GlobalSystemMediaTransportControlsSessionManager sender, object args)
         {
             // Detach events from previous session
@@ -399,24 +403,43 @@ namespace ripple
             SongEndSec.Text = ((int)timeline.EndTime.TotalSeconds % 60).ToString("D2");
         }
 
-        // TODO: Seeker
-        //private void Seeker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        //{
-        //    async Task AsyncWorker()
-        //    {
-        //        try
-        //        {
-        //            await _currentSession.TryChangePlaybackPositionAsync((long)e.NewValue);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            System.Windows.MessageBox.Show(ex.Message);
-        //        }
-        //    }
-        //    _ = AsyncWorker();
-        //}
+        // Playback Controls
+        private void UpdateVisibility()
+        {
+            try
+            {
+                if (_currentSession == null)
+                    throw new Exception("Could not get current session. MainWindow.xaml.cs:UpdateVisibility()"); ;
 
-        private void ShuffleButton_Click(object sender, RoutedEventArgs e)
+                var playbackInfo = _currentSession.GetPlaybackInfo()
+                    ?? throw new Exception("Could not get playback info. MainWindow.xaml.cs:UpdateVisibility()");
+
+                _controls = playbackInfo.Controls;
+                if (_controls == null)
+                    throw new Exception("Could not get playback controls. MainWindow.xaml.cs:UpdateVisibility()");
+
+                //Visibility shuffleVis = _controls.IsShuffleEnabled ? Visibility.Visible : Visibility.Hidden;
+                Visibility skipPrevVis = _controls.IsPreviousEnabled ? Visibility.Visible : Visibility.Hidden;
+                Visibility playPauseVis = _controls.IsPlayPauseToggleEnabled ? Visibility.Visible : Visibility.Hidden;
+                Visibility skipNextVis = _controls.IsNextEnabled ? Visibility.Visible : Visibility.Hidden;
+                //Visibility repeatVis = _controls.IsRepeatEnabled ? Visibility.Visible : Visibility.Hidden;
+
+                Dispatcher.Invoke(() =>
+                {
+                    //ShuffleButton.Visibility = shuffleVis;
+                    SkipPreviousButton.Visibility = skipPrevVis;
+                    TogglePlayPauseButton.Visibility = playPauseVis;
+                    SkipNextButton.Visibility = skipNextVis;
+                    //RepeatButton.Visibility = repeatVis;
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message);
+            }
+        }
+
+        /*private void ShuffleButton_Click(object sender, RoutedEventArgs e)
         {
             ShuffleButton.IsEnabled = false;
 
@@ -453,6 +476,12 @@ namespace ripple
 
             ShuffleButton.IsEnabled = true;
         }
+
+        private bool PingShuffle()
+        {
+            _shuffleState = !_shuffleState;
+            return _shuffleState;
+        }*/
 
         private void SkipPreviousButton_Click(object sender, RoutedEventArgs e)
         {
@@ -514,7 +543,7 @@ namespace ripple
             TogglePlayPauseButton.IsEnabled = true;
         }
 
-        private void RepeatButton_Click(object sender, RoutedEventArgs e)
+        /*private void RepeatButton_Click(object sender, RoutedEventArgs e)
         {
             RepeatButton.IsEnabled = false;
 
@@ -538,82 +567,10 @@ namespace ripple
             RepeatButton.IsEnabled = true;
         }
 
-        private void Tiny_Click(object sender, RoutedEventArgs e)
+        private MediaPlaybackAutoRepeatMode? PingRepeat()
         {
-            // Window
-            Height = 100;
-            Width = 300;
-
-            // Main grid
-            MainGrid.RowDefinitions.Clear();
-            RowDefinition row1 = new() { Height = new GridLength(20) };
-            RowDefinition row2 = new() { Height = new GridLength(30) };
-            RowDefinition row3 = new() { Height = new GridLength(20) };
-            RowDefinition row4 = new() { Height = new GridLength(30) };
-            MainGrid.RowDefinitions.Add(row1);
-            MainGrid.RowDefinitions.Add(row2);
-            MainGrid.RowDefinitions.Add(row3);
-            MainGrid.RowDefinitions.Add(row4);
-
-            // Title bar
-            SettingsMenu.Margin = new Thickness(0, 0, 0, 0);
-            SettingsStack.Width = Width;
-            WindowTitle.FontSize = 11;
-            WindowTitle.Margin = new Thickness(5, 0, 0, 0);
-            WindowControlsStack.Margin = new Thickness(0, 0, 5, 0);
-
-            // Metadata
-            SongTitleBox.FontSize = 12;
-            SongArtistBox.FontSize = 11;
-
-            // Seeker
-            SeekerGrid.ColumnDefinitions.Clear();
-            ColumnDefinition col1 = new() { Width = new GridLength(50) };
-            ColumnDefinition col2 = new() { Width = new GridLength(200) };
-            ColumnDefinition col3 = new() { Width = new GridLength(50) };
-            SeekerGrid.ColumnDefinitions.Add(col1);
-            SeekerGrid.ColumnDefinitions.Add(col2);
-            SeekerGrid.ColumnDefinitions.Add(col3);
-            Seeker.Width = 200;
-        }
-
-        private void Small_Click(object sender, RoutedEventArgs e)
-        {
-            // Window
-            Height = 150;
-            Width = 350;
-
-            // Main grid
-            MainGrid.RowDefinitions.Clear();
-            RowDefinition row1 = new() { Height = new GridLength(30) };
-            RowDefinition row2 = new() { Height = new GridLength(50) };
-            RowDefinition row3 = new() { Height = new GridLength(30) };
-            RowDefinition row4 = new() { Height = new GridLength(40) };
-            MainGrid.RowDefinitions.Add(row1);
-            MainGrid.RowDefinitions.Add(row2);
-            MainGrid.RowDefinitions.Add(row3);
-            MainGrid.RowDefinitions.Add(row4);
-
-            // Title bar
-            SettingsMenu.Margin = new Thickness(10, 0, 10, 0);
-            SettingsStack.Width = Width;
-            WindowTitle.FontSize = 12;
-            WindowTitle.Margin = new Thickness(0, 0, 0, 0);
-            WindowControlsStack.Margin = new Thickness(0, 0, 10, 0);
-
-            // Metadata
-            SongTitleBox.FontSize = 14;
-            SongArtistBox.FontSize = 12;
-
-            // Seeker
-            SeekerGrid.ColumnDefinitions.Clear();
-            ColumnDefinition col1 = new() { Width = new GridLength(50) };
-            ColumnDefinition col2 = new() { Width = new GridLength(250) };
-            ColumnDefinition col3 = new() { Width = new GridLength(50) };
-            SeekerGrid.ColumnDefinitions.Add(col1);
-            SeekerGrid.ColumnDefinitions.Add(col2);
-            SeekerGrid.ColumnDefinitions.Add(col3);
-            Seeker.Width = 250;
-        }
+            //MediaPlaybackAutoRepeatMode mode = (_repeatState + 1);
+            return ++RepeatState;
+        }*/
     }
 }
