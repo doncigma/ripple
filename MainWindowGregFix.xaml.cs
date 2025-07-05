@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -28,15 +28,18 @@ namespace ripple
         private bool _shuffleState;
         private MediaPlaybackAutoRepeatMode RepeatState { get; set; }
 
+        // Timer to keep the timeline moving once per second
+        private readonly DispatcherTimer _songTimer;
+
         public MainWindow()
         {
             InitializeComponent();
             this.Topmost = true;
 
-            // Custom window
-            //SolidColorBrush brush = new SolidColorBrush()
-            //brush.Color = new Color();
+            this._songTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
+            this._songTimer.Tick += (_, __) => UpdateTimeline(); // Hook the timer that drives the progress bar
 
+            // Custom window
             async void InitializeMediaSession()
             {
                 try
@@ -47,65 +50,44 @@ namespace ripple
                     _sessionManager.CurrentSessionChanged += OnCurrentSessionChanged;
 
                     this._currentSession = this._sessionManager.GetCurrentSession();
-                    this._currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
-                    this._currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
-                    this._currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
 
-                    // Media properties
-                    var mediaProperties = await this._currentSession.TryGetMediaPropertiesAsync()
-                        ?? throw new Exception("Could not initialize media properties");
-                    Dispatcher.Invoke(() =>
+                    if (this._currentSession != null)
                     {
-                        SongTitleBox.Text = mediaProperties.Title;
-                        SongArtistBox.Text = mediaProperties.Artist;
-                    });
+                        this._currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
+                        this._currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
+                        this._currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
 
-                    // Playback info and timeline
-                    var playbackInfo = this._currentSession.GetPlaybackInfo()
-                        ?? throw new Exception("Could not initialize playback info");
-                    this._controls = playbackInfo.Controls;
-                    this.UpdateVisibility();
+                        // Playback info and timeline
+                        var playbackInfo = this._currentSession.GetPlaybackInfo()
+                            ?? throw new Exception("Could not initialize playback info");
+                        this._songTimer.IsEnabled = playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+                        this._controls = playbackInfo.Controls;
 
-                    var status = (int)playbackInfo.PlaybackStatus;
-                    switch (status)
-                    {
-                        case 4: // play
-                                //this._songTimer.Start();
-                            Dispatcher.Invoke(() =>
-                            {
-                                TogglePlayButtonIcon.Icon = FontAwesome.WPF.FontAwesomeIcon.Pause;
-                            });
-                            break;
-                        case 5: // paused
-                            Dispatcher.Invoke(() =>
-                            {
-                                TogglePlayButtonIcon.Icon = FontAwesome.WPF.FontAwesomeIcon.Play;
-                            });
-                            break;
+                        // Media properties
+                        var mediaProperties = await this._currentSession.TryGetMediaPropertiesAsync()
+                            ?? throw new Exception("Could not initialize media properties");
+
+                        FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
+                        int status = (int)playbackInfo.PlaybackStatus;
+                        switch (status)
+                        {
+                            case 4:
+                                icon = FontAwesome.WPF.FontAwesomeIcon.Pause;
+                                break;
+                            case 5:
+                                icon = FontAwesome.WPF.FontAwesomeIcon.Play;
+                                break;
+                        }
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            SongTitleBox.Text = mediaProperties.Title;
+                            SongArtistBox.Text = mediaProperties.Artist;
+                            TogglePlayButtonIcon.Icon = icon;
+                        });
+
+                        this.UpdateVisibility();
                     }
-
-                    var timeline = this._currentSession.GetTimelineProperties()
-                        ?? throw new Exception("Could not initialize session manager");
-                    Dispatcher.Invoke(() =>
-                    {
-                        Seeker.Minimum = timeline.StartTime.TotalSeconds;
-                        Seeker.Maximum = timeline.EndTime.TotalSeconds;
-                        Seeker.Value = timeline.Position.TotalSeconds;
-
-                        SongStartMin.Text = timeline.Position.Minutes < 10
-                            ? timeline.Position.Minutes.ToString()
-                            : timeline.Position.Minutes.ToString("D2");
-                        SongStartSec.Text = timeline.Position.Seconds.ToString("D2");
-
-                        SongEndMin.Text = timeline.EndTime.Minutes < 10
-                            ? timeline.EndTime.Minutes.ToString()
-                            : timeline.EndTime.Minutes.ToString("D2");
-                        SongEndSec.Text = timeline.EndTime.Seconds.ToString("D2");
-                    });
-
-                    // Shuffle and Repeat states
-                    this._shuffleState = this._shuffleEnabled;
-                    this.RepeatState = playbackInfo.AutoRepeatMode ?? MediaPlaybackAutoRepeatMode.None;
                 }
                 catch (Exception ex)
                 {
@@ -190,7 +172,7 @@ namespace ripple
             this.CheckDock();
             this.Cursor = System.Windows.Input.Cursors.Arrow;
         }
-
+        
         private void CheckDock()
         {
             // For multiple monitor setup (not working): 
@@ -296,12 +278,22 @@ namespace ripple
 
         private void OnCurrentSessionChanged(GlobalSystemMediaTransportControlsSessionManager sender, object args)
         {
+            // Detach events from previous session
+            if (this._currentSession != null)
+            {
+                this._currentSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
+                this._currentSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
+                this._currentSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
+            }
+
             var newSession = sender.GetCurrentSession()
                 ?? throw new Exception("Could not get media session");
             this._currentSession = newSession;
             this._currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
             this._currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
-            //this._currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
+            this._currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
+            this.UpdateTimeline();
+
             this.UpdateVisibility();
         }
 
@@ -338,15 +330,15 @@ namespace ripple
                 try
                 {
                     var playbackInfo = sender.GetPlaybackInfo();
+                    _songTimer.IsEnabled = playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
                     FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
                     int status = (int)playbackInfo.PlaybackStatus;
-
-                    switch (status) // current status after event
+                    switch (status)
                     {
-                        case 4: // playing
+                        case 4:
                             icon = FontAwesome.WPF.FontAwesomeIcon.Pause;
                             break;
-                        case 5: // paused
+                        case 5:
                             icon = FontAwesome.WPF.FontAwesomeIcon.Play;
                             break;
                     }
@@ -377,29 +369,42 @@ namespace ripple
             this.UpdateVisibility();
         }
 
-        // TODO: Seeker
         private void OnTimelinePropertiesChanged(GlobalSystemMediaTransportControlsSession sender, TimelinePropertiesChangedEventArgs args)
         {
-            var timeline = this._currentSession?.GetTimelineProperties();
-            if (timeline != null)
+            Dispatcher.InvokeAsync(() =>
             {
-                Dispatcher.Invoke(() =>
-                {
-                    Seeker.Minimum = timeline.StartTime.TotalSeconds;
-                    Seeker.Maximum = timeline.EndTime.TotalSeconds;
-                    Seeker.Value = timeline.Position.TotalSeconds;
+                UpdateTimelineBounds();
+                UpdateTimelinePosition();
+            }, DispatcherPriority.Background);
+        }
 
-                    SongStartMin.Text = timeline.Position.Minutes < 10
-                        ? timeline.Position.Minutes.ToString()
-                        : timeline.Position.Minutes.ToString("D2");
-                    SongStartSec.Text = timeline.Position.Seconds.ToString("D2");
+        private void UpdateTimelineBounds()
+        {
+            if (this._currentSession == null) return;
 
-                    SongEndMin.Text = timeline.EndTime.Minutes < 10
-                        ? timeline.EndTime.Minutes.ToString()
-                        : timeline.EndTime.Minutes.ToString("D2");
-                    SongEndSec.Text = timeline.EndTime.Seconds.ToString("D2");
-                });
-            }
+            var timeline = this._currentSession.GetTimelineProperties();
+            Seeker.Minimum = timeline.StartTime.TotalSeconds;
+            Seeker.Maximum = timeline.EndTime.TotalSeconds;
+        }
+
+        private void UpdateTimelinePosition()
+        {
+            if (this._currentSession == null) return;
+
+            var timeline = this._currentSession.GetTimelineProperties();
+            double rate = this._currentSession.GetPlaybackInfo().PlaybackRate ?? 1.00;
+            double elapsed = (DateTimeOffset.Now - timeline.LastUpdatedTime).TotalSeconds * rate;
+            double pos = timeline.Position.TotalSeconds + elapsed;
+            pos = Math.Clamp(pos, Seeker.Minimum, Seeker.Maximum);
+
+            // Update UI elements
+            Seeker.Value = pos;
+
+            SongStartMin.Text = ((int)pos / 60).ToString("D2");
+            SongStartSec.Text = ((int)pos % 60).ToString("D2");
+
+            SongEndMin.Text = ((int)timeline.EndTime.TotalSeconds / 60).ToString("D2");
+            SongEndSec.Text = ((int)timeline.EndTime.TotalSeconds % 60).ToString("D2");
         }
 
         // TODO: Seeker

@@ -34,7 +34,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <Style x:Key="BarIconButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
@@ -72,7 +72,7 @@
             <Setter Property="Height" Value="12" />
             <Setter Property="Foreground" Value="GhostWhite" />
         </Style>
-        
+
         <Style x:Key="BarIconStyle" TargetType="fa:ImageAwesome">
             <Setter Property="Width" Value="12" />
             <Setter Property="Height" Value="20" />
@@ -162,10 +162,10 @@
                         Margin="0,0,5,0"
                         >
                 <Button x:Name="MinimizeButton" Click="MinimizeButton_Click" Style="{StaticResource BarIconButtonStyle}" Cursor="Hand">
-                    <fa:ImageAwesome Icon="WindowMinimize" Style="{StaticResource BarIconStyle}" />
+                    <fa:ImageAwesome Icon="WindowMinimize" Style="{StaticResource BarIconStyle}" Height="16" Width="10" />
                 </Button>
                 <Button x:Name="CloseButton" Click="CloseButton_Click" Style="{StaticResource BarIconButtonStyle}" Cursor="Hand">
-                    <fa:ImageAwesome Icon="Close" Style="{StaticResource BarIconStyle}" />
+                    <fa:ImageAwesome Icon="Close" Style="{StaticResource BarIconStyle}" Height="14" Width="8" />
                 </Button>
             </StackPanel>
         </DockPanel>
@@ -195,7 +195,8 @@
                     Width="225"
                     Thumb.DragStarted="Seeker_DragStarted"
                     Thumb.DragCompleted="Seeker_DragCompleted"
-                    />--><!--
+                    />-->
+            <!--
                 <ProgressBar x:Name="Seeker"
                              Width="200"
                              Height="4"
@@ -222,7 +223,7 @@
                     <TextBlock Text=":"/>
                     <TextBlock x:Name="SongStartSec" Text="00"/>
                 </StackPanel>
-                
+
                 <!--<Slider Style="{DynamicResource SeekerStyle2}" 
                     x:Name="Seeker"
                     ValueChanged="Seeker_ValueChanged"
