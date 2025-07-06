@@ -20,15 +20,14 @@ namespace ripple
         private bool _shuffleEnabled;
         private bool _skipPrevEnabled;
         private bool _playPauseEnabled;
-        private bool _seekEnabled;
         private bool _skipNextEnabled;
         private bool _repeatEnabled;
 
-        // Shuffle and Repeat states
+        /*//Shuffle and Repeat states
         private bool _shuffleState;
-        private MediaPlaybackAutoRepeatMode RepeatState { get; set; }
+        private MediaPlaybackAutoRepeatMode RepeatState { get; set; }*/
 
-        // Timer to keep the timeline moving once per second
+        // Timer to manually track song progress
         private readonly DispatcherTimer _songTimer;
 
         public MainWindow()
@@ -37,7 +36,7 @@ namespace ripple
             Topmost = true;
 
             _songTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
-            _songTimer.Tick += (_, __) => UpdateTimelinePosition(); // Hook the timer that drives the progress bar
+            _songTimer.Tick += (_, __) => UpdateTimelinePosition();
 
             // Custom window
             async void InitializeMediaSession()
@@ -45,14 +44,15 @@ namespace ripple
                 try
                 {
                     _sessionManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-                    if (_sessionManager == null) { throw new Exception("Could not initialize session manager. MainWindow.xaml.cs:MainWindow()"); }
+                    if (_sessionManager == null) 
+                        throw new Exception("Could not initialize session manager. MainWindow.xaml.cs:MainWindow()");
 
                     _sessionManager.CurrentSessionChanged += OnCurrentSessionChanged;
 
                     _currentSession = _sessionManager.GetCurrentSession();
-
                     if (_currentSession != null)
                     {
+                        // Hook event handlers
                         _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
                         _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
                         _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
@@ -68,6 +68,7 @@ namespace ripple
                         var mediaProperties = await _currentSession.TryGetMediaPropertiesAsync()
                             ?? throw new Exception("Could not intialize media properties. MainWindow.xaml.cs:MainWindow()");
 
+                        // Setup icons
                         FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
                         if (playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
                             icon = FontAwesome.WPF.FontAwesomeIcon.Pause;
@@ -92,71 +93,7 @@ namespace ripple
             UpdateTimeline();
         }
 
-        private void UpdateVisibility()
-        {
-            var playbackInfo = _currentSession?.GetPlaybackInfo();
-            _controls = playbackInfo?.Controls;
-
-            if (_controls != null)
-            {
-                _shuffleEnabled = _controls.IsShuffleEnabled;
-                _skipPrevEnabled = _controls.IsPreviousEnabled;
-                _seekEnabled = _controls.IsPlaybackPositionEnabled;
-                _playPauseEnabled = _controls.IsPlayPauseToggleEnabled;
-                _skipNextEnabled = _controls.IsNextEnabled;
-                _repeatEnabled = _controls.IsRepeatEnabled;
-            }
-            else
-            {
-                _shuffleEnabled = false;
-                _skipPrevEnabled = false;
-                _seekEnabled = false;
-                _skipNextEnabled = false;
-                _repeatEnabled = false;
-            }
-
-            Visibility shuffleVis = Visibility.Hidden;
-            Visibility skipPrevVis = Visibility.Hidden;
-            Visibility playPauseVis = Visibility.Hidden;
-            Visibility seekerVis = Visibility.Hidden;
-            Visibility skipNextVis = Visibility.Hidden;
-            Visibility repeatVis = Visibility.Hidden;
-
-            // Shuffle
-            if (_shuffleEnabled) { shuffleVis = Visibility.Visible; }
-            else if (!_shuffleEnabled) { shuffleVis = Visibility.Hidden; }
-
-            // Skip prev
-            if (_skipPrevEnabled) { skipPrevVis = Visibility.Visible; }
-            else if (!_shuffleEnabled) { skipPrevVis = Visibility.Hidden; }
-
-            // Play pause
-            if (_playPauseEnabled) { playPauseVis = Visibility.Visible; }
-            else if (!_playPauseEnabled) { playPauseVis = Visibility.Hidden; }
-
-            // Seeker
-            if (_seekEnabled) { seekerVis = Visibility.Visible; }
-            else if (!_seekEnabled) { seekerVis = Visibility.Hidden; }
-
-            // Skip next
-            if (_skipNextEnabled) { skipNextVis = Visibility.Visible; }
-            else if (!_skipNextEnabled) { skipNextVis = Visibility.Hidden; }
-
-            // Repeat
-            if (_repeatEnabled) { repeatVis = Visibility.Visible; }
-            else if (!_repeatEnabled) { repeatVis = Visibility.Hidden; }
-
-            Dispatcher.Invoke(() =>
-            {
-                ShuffleButton.Visibility = shuffleVis;
-                SkipPreviousButton.Visibility = skipPrevVis;
-                TogglePlayPauseButton.Visibility = playPauseVis;
-                Seeker.Visibility = seekerVis;
-                SkipNextButton.Visibility = skipNextVis;
-                RepeatButton.Visibility = repeatVis;
-            });
-        }
-
+        // Window Controls
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             BeginAnimation(LeftProperty, null);
@@ -258,286 +195,6 @@ namespace ripple
             WindowState = WindowState.Minimized;
         }
 
-        private bool PingShuffle()
-        {
-            _shuffleState = !_shuffleState;
-            return _shuffleState;
-        }
-
-        private MediaPlaybackAutoRepeatMode? PingRepeat()
-        {
-            //MediaPlaybackAutoRepeatMode mode = (_repeatState + 1);
-            return ++RepeatState;
-        }
-
-        private void OnCurrentSessionChanged(GlobalSystemMediaTransportControlsSessionManager sender, object args)
-        {
-            // Detach events from previous session
-            if (_currentSession != null)
-            {
-                _currentSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
-                _currentSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
-                _currentSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
-            }
-
-            var newSession = sender.GetCurrentSession()
-                ?? throw new Exception("Could not get media session");
-            _currentSession = newSession;
-            _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
-            _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
-            _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
-            UpdateTimelinePosition();
-
-            UpdateVisibility();
-        }
-
-        private void OnMediaPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, MediaPropertiesChangedEventArgs args)
-        {
-            async Task AsyncWorker()
-            {
-                try
-                {
-                    var mediaProperties = await sender.TryGetMediaPropertiesAsync();
-                    if (mediaProperties != null)
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            SongTitleBox.Text = mediaProperties.Title;
-                            SongArtistBox.Text = mediaProperties.Artist;
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(ex.Message);
-                }
-            }
-            _ = AsyncWorker();
-
-            UpdateVisibility();
-        }
-
-        private void OnPlaybackInfoChanged(GlobalSystemMediaTransportControlsSession sender, PlaybackInfoChangedEventArgs args)
-        {
-            async Task AsyncWorker()
-            {
-                try
-                {
-                    // Playback info and timeline
-                    var playbackInfo = sender.GetPlaybackInfo()
-                        ?? throw new Exception("Could not get playback info. MainWindow.xaml.cs:OnPlaybackInfoChanged()");
-
-                    _songTimer.IsEnabled = playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
-                    _controls = playbackInfo.Controls;
-
-                    // Media properties
-                    var mediaProperties = sender.TryGetMediaPropertiesAsync().GetResults()
-                        ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:OnPlaybackInfoChanged()");
-
-                    FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
-                    if (playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
-                        icon = FontAwesome.WPF.FontAwesomeIcon.Pause;
-                    else icon = FontAwesome.WPF.FontAwesomeIcon.Play;
-
-                    await Dispatcher.InvokeAsync(() =>
-                    {
-                        SongTitleBox.Text = mediaProperties.Title;
-                        SongArtistBox.Text = mediaProperties.Artist;
-                        TogglePlayButtonIcon.Icon = icon;
-                    });
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(ex.Message);
-                }
-            }
-            _ = AsyncWorker();
-
-            UpdateTimeline();
-        }
-
-        private void OnTimelinePropertiesChanged(GlobalSystemMediaTransportControlsSession sender, TimelinePropertiesChangedEventArgs args)
-        {
-            UpdateTimeline();
-        }
-
-        private void UpdateTimeline()
-        {
-            Dispatcher.InvokeAsync(() =>
-            {
-                UpdateTimelineBounds();
-                UpdateTimelinePosition();
-            }, DispatcherPriority.Background);
-        }
-
-        private void UpdateTimelineBounds()
-        {
-            if (_currentSession == null) return;
-
-            var timeline = _currentSession.GetTimelineProperties();
-            Seeker.Minimum = timeline.StartTime.TotalSeconds;
-            Seeker.Maximum = timeline.EndTime.TotalSeconds;
-        }
-
-        private void UpdateTimelinePosition()
-        {
-            if (_currentSession == null) return;
-
-            var timeline = _currentSession.GetTimelineProperties();
-            double rate = _currentSession.GetPlaybackInfo().PlaybackRate ?? 1.00;
-            double elapsed = (DateTimeOffset.Now - timeline.LastUpdatedTime).TotalSeconds * rate;
-            double pos = timeline.Position.TotalSeconds + elapsed;
-            pos = Math.Clamp(pos, Seeker.Minimum, Seeker.Maximum);
-
-            // Update UI elements
-            Seeker.Value = pos;
-
-            SongStartMin.Text = ((int)pos / 60).ToString("D2");
-            SongStartSec.Text = ((int)pos % 60).ToString("D2");
-
-            SongEndMin.Text = ((int)timeline.EndTime.TotalSeconds / 60).ToString("D2");
-            SongEndSec.Text = ((int)timeline.EndTime.TotalSeconds % 60).ToString("D2");
-        }
-
-        // TODO: Seeker
-        //private void Seeker_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        //{
-        //    async Task AsyncWorker()
-        //    {
-        //        try
-        //        {
-        //            await _currentSession.TryChangePlaybackPositionAsync((long)e.NewValue);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            System.Windows.MessageBox.Show(ex.Message);
-        //        }
-        //    }
-        //    _ = AsyncWorker();
-        //}
-
-        private void ShuffleButton_Click(object sender, RoutedEventArgs e)
-        {
-            ShuffleButton.IsEnabled = false;
-
-            async Task AsyncWorker()
-            {
-                try
-                {
-                    bool newShuffleState = PingShuffle();
-                    await _currentSession?.TryChangeShuffleActiveAsync(newShuffleState);
-
-                    SolidColorBrush brush;
-
-                    switch (newShuffleState)
-                    {
-                        case true:
-                            brush = new SolidColorBrush(Colors.LightGray);
-                            break;
-                        case false:
-                            brush = new SolidColorBrush(Colors.Transparent);
-                            break;
-                    }
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        ShuffleButton.Background = brush;
-                    });
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(ex.Message);
-                }
-            }
-            _ = AsyncWorker();
-
-            ShuffleButton.IsEnabled = true;
-        }
-
-        private void SkipPreviousButton_Click(object sender, RoutedEventArgs e)
-        {
-            SkipPreviousButton.IsEnabled = false;
-
-            async Task AsyncWorker()
-            {
-                try
-                {
-                    await _currentSession?.TrySkipPreviousAsync();
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(ex.Message);
-                }
-            }
-            _ = AsyncWorker();
-
-            SkipPreviousButton.IsEnabled = true;
-        }
-
-        private void SkipNextButton_Click(object sender, RoutedEventArgs e)
-        {
-            SkipNextButton.IsEnabled = false;
-
-            async Task AsyncWorker()
-            {
-                try
-                {
-                    await _currentSession?.TrySkipNextAsync();
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(ex.Message);
-                }
-            }
-            _ = AsyncWorker();
-
-            SkipNextButton.IsEnabled = true;
-        }
-
-        private void TogglePlayPauseButton_Click(object sender, RoutedEventArgs e)
-        {
-            TogglePlayPauseButton.IsEnabled = false;
-
-            async Task AsyncWorker()
-            {
-                try
-                {
-                    await _currentSession?.TryTogglePlayPauseAsync();
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(ex.Message);
-                }
-            }
-            _ = AsyncWorker();
-
-            TogglePlayPauseButton.IsEnabled = true;
-        }
-
-        private void RepeatButton_Click(object sender, RoutedEventArgs e)
-        {
-            RepeatButton.IsEnabled = false;
-
-            async Task AsyncWorker()
-            {
-                try
-                {
-                    MediaPlaybackAutoRepeatMode? mode = PingRepeat();
-                    if (mode.HasValue)
-                    {
-                        await _currentSession?.TryChangeAutoRepeatModeAsync((MediaPlaybackAutoRepeatMode)mode);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(ex.Message);
-                }
-            }
-            _ = AsyncWorker();
-
-            RepeatButton.IsEnabled = true;
-        }
-
         private void Tiny_Click(object sender, RoutedEventArgs e)
         {
             // Window
@@ -615,5 +272,303 @@ namespace ripple
             SeekerGrid.ColumnDefinitions.Add(col3);
             Seeker.Width = 250;
         }
+
+        // Playback Events
+        private void OnCurrentSessionChanged(GlobalSystemMediaTransportControlsSessionManager sender, object args)
+        {
+            // Detach events from previous session
+            if (_currentSession != null)
+            {
+                _currentSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
+                _currentSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
+                _currentSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
+            }
+
+            var newSession = sender.GetCurrentSession()
+                ?? throw new Exception("Could not get media session. MainWindow.xaml.cs:OnCurrentSessionChanged()");
+
+            _currentSession = newSession;
+            _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
+            _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
+            _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
+            
+            UpdateVisibility();
+            UpdateTimeline();
+        }
+
+        private void OnMediaPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, MediaPropertiesChangedEventArgs args)
+        {
+            async Task AsyncWorker()
+            {
+                try
+                {
+                    var mediaProperties = await sender.TryGetMediaPropertiesAsync()
+                        ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:OnMediaPropertiesChanged()");
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        SongTitleBox.Text = mediaProperties.Title;
+                        SongArtistBox.Text = mediaProperties.Artist;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+            }
+            _ = AsyncWorker();
+        }
+
+        private void OnPlaybackInfoChanged(GlobalSystemMediaTransportControlsSession sender, PlaybackInfoChangedEventArgs args)
+        {
+            async Task AsyncWorker()
+            {
+                try
+                {
+                    // Playback info and timeline
+                    var playbackInfo = sender.GetPlaybackInfo()
+                        ?? throw new Exception("Could not get playback info. MainWindow.xaml.cs:OnPlaybackInfoChanged()");
+
+                    _songTimer.IsEnabled = playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+                    _controls = playbackInfo.Controls;
+
+                    // Media properties
+                    var mediaProperties = await sender.TryGetMediaPropertiesAsync()
+                        ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:OnPlaybackInfoChanged()");
+
+                    FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
+                    if (playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
+                        icon = FontAwesome.WPF.FontAwesomeIcon.Pause;
+                    else icon = FontAwesome.WPF.FontAwesomeIcon.Play;
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        SongTitleBox.Text = mediaProperties.Title;
+                        SongArtistBox.Text = mediaProperties.Artist;
+                        TogglePlayButtonIcon.Icon = icon;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+            }
+            _ = AsyncWorker();
+
+            UpdateTimeline();
+        }
+
+        private void OnTimelinePropertiesChanged(GlobalSystemMediaTransportControlsSession sender, TimelinePropertiesChangedEventArgs args)
+        {
+            UpdateTimeline();
+        }
+
+        private void UpdateTimeline()
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                UpdateTimelineBounds();
+                UpdateTimelinePosition();
+            }, DispatcherPriority.Background);
+        }
+
+        private void UpdateTimelineBounds()
+        {
+            if (_currentSession == null) return;
+
+            var timeline = _currentSession.GetTimelineProperties();
+            Seeker.Minimum = timeline.StartTime.TotalSeconds;
+            Seeker.Maximum = timeline.EndTime.TotalSeconds;
+        }
+
+        private void UpdateTimelinePosition()
+        {
+            if (_currentSession == null) return;
+
+            var timeline = _currentSession.GetTimelineProperties();
+            double rate = _currentSession.GetPlaybackInfo().PlaybackRate ?? 1.00;
+            double elapsed = (DateTimeOffset.Now - timeline.LastUpdatedTime).TotalSeconds * rate;
+            double pos = timeline.Position.TotalSeconds + elapsed;
+            pos = Math.Clamp(pos, Seeker.Minimum, Seeker.Maximum);
+
+            // Update UI elements
+            Seeker.Value = pos;
+
+            SongStartMin.Text = ((int)pos / 60).ToString("D2");
+            SongStartSec.Text = ((int)pos % 60).ToString("D2");
+
+            SongEndMin.Text = ((int)timeline.EndTime.TotalSeconds / 60).ToString("D2");
+            SongEndSec.Text = ((int)timeline.EndTime.TotalSeconds % 60).ToString("D2");
+        }
+
+        // Playback Controls
+        private void UpdateVisibility()
+        {
+            try
+            {
+                if (_currentSession == null)
+                    throw new Exception("Could not get current session. MainWindow.xaml.cs:UpdateVisibility()"); ;
+
+                var playbackInfo = _currentSession.GetPlaybackInfo()
+                    ?? throw new Exception("Could not get playback info. MainWindow.xaml.cs:UpdateVisibility()");
+
+                _controls = playbackInfo.Controls;
+                if (_controls == null)
+                    throw new Exception("Could not get playback controls. MainWindow.xaml.cs:UpdateVisibility()");
+
+                //Visibility shuffleVis = _controls.IsShuffleEnabled ? Visibility.Visible : Visibility.Hidden;
+                Visibility skipPrevVis = _controls.IsPreviousEnabled ? Visibility.Visible : Visibility.Hidden;
+                Visibility playPauseVis = _controls.IsPlayPauseToggleEnabled ? Visibility.Visible : Visibility.Hidden;
+                Visibility skipNextVis = _controls.IsNextEnabled ? Visibility.Visible : Visibility.Hidden;
+                //Visibility repeatVis = _controls.IsRepeatEnabled ? Visibility.Visible : Visibility.Hidden;
+
+                Dispatcher.Invoke(() =>
+                {
+                    //ShuffleButton.Visibility = shuffleVis;
+                    SkipPreviousButton.Visibility = skipPrevVis;
+                    TogglePlayPauseButton.Visibility = playPauseVis;
+                    SkipNextButton.Visibility = skipNextVis;
+                    //RepeatButton.Visibility = repeatVis;
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message);
+            }
+        }
+
+        /*private void ShuffleButton_Click(object sender, RoutedEventArgs e)
+        {
+            ShuffleButton.IsEnabled = false;
+
+            async Task AsyncWorker()
+            {
+                try
+                {
+                    bool newShuffleState = PingShuffle();
+                    await _currentSession?.TryChangeShuffleActiveAsync(newShuffleState);
+
+                    SolidColorBrush brush;
+
+                    switch (newShuffleState)
+                    {
+                        case true:
+                            brush = new SolidColorBrush(Colors.LightGray);
+                            break;
+                        case false:
+                            brush = new SolidColorBrush(Colors.Transparent);
+                            break;
+                    }
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        ShuffleButton.Background = brush;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+            }
+            _ = AsyncWorker();
+
+            ShuffleButton.IsEnabled = true;
+        }
+
+        private bool PingShuffle()
+        {
+            _shuffleState = !_shuffleState;
+            return _shuffleState;
+        }*/
+
+        private void SkipPreviousButton_Click(object sender, RoutedEventArgs e)
+        {
+            SkipPreviousButton.IsEnabled = false;
+
+            async Task AsyncWorker()
+            {
+                try
+                {
+                    await _currentSession?.TrySkipPreviousAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+            }
+            _ = AsyncWorker();
+
+            SkipPreviousButton.IsEnabled = true;
+        }
+
+        private void SkipNextButton_Click(object sender, RoutedEventArgs e)
+        {
+            SkipNextButton.IsEnabled = false;
+
+            async Task AsyncWorker()
+            {
+                try
+                {
+                    await _currentSession?.TrySkipNextAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+            }
+            _ = AsyncWorker();
+
+            SkipNextButton.IsEnabled = true;
+        }
+
+        private void TogglePlayPauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            TogglePlayPauseButton.IsEnabled = false;
+
+            async Task AsyncWorker()
+            {
+                try
+                {
+                    await _currentSession?.TryTogglePlayPauseAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+            }
+            _ = AsyncWorker();
+
+            TogglePlayPauseButton.IsEnabled = true;
+        }
+
+        /*private void RepeatButton_Click(object sender, RoutedEventArgs e)
+        {
+            RepeatButton.IsEnabled = false;
+
+            async Task AsyncWorker()
+            {
+                try
+                {
+                    MediaPlaybackAutoRepeatMode? mode = PingRepeat();
+                    if (mode.HasValue)
+                    {
+                        await _currentSession?.TryChangeAutoRepeatModeAsync((MediaPlaybackAutoRepeatMode)mode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+            }
+            _ = AsyncWorker();
+
+            RepeatButton.IsEnabled = true;
+        }
+
+        private MediaPlaybackAutoRepeatMode? PingRepeat()
+        {
+            //MediaPlaybackAutoRepeatMode mode = (_repeatState + 1);
+            return ++RepeatState;
+        }*/
     }
 }
