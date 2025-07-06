@@ -37,7 +37,7 @@ namespace ripple
                 try
                 {
                     _sessionManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-                    if (_sessionManager == null) 
+                    if (_sessionManager == null)
                         throw new Exception("Could not initialize session manager. MainWindow.xaml.cs:MainWindow()");
 
                     _sessionManager.CurrentSessionChanged += OnCurrentSessionChanged;
@@ -96,14 +96,22 @@ namespace ripple
             CheckDock();
             Cursor = System.Windows.Input.Cursors.Arrow;
         }
-        
+
         private void CheckDock()
         {
-            // For multiple monitor setup (not working): 
-            //System.Windows.Forms.Screen screen = System.Windows.Forms.Screen.FromHandle(new System.Windows.Interop.WindowInteropHelper(this).Handle);
-            //var bounds = screen.Bounds;
+            // Get current screen
+            var screen = Screen.FromHandle(new WindowInteropHelper(this).Handle);
+            var area = screen.WorkingArea;
 
-            Rect bounds = SystemParameters.WorkArea;
+            // Convert from forms to wpf units
+            var dpi = VisualTreeHelper.GetDpi(this);
+            var bounds = new Rect(
+                area.Left / dpi.DpiScaleX,
+                area.Top / dpi.DpiScaleY,
+                area.Width / dpi.DpiScaleX,
+                area.Height / dpi.DpiScaleY
+            );
+
             double thresholdX = 350;
             double thresholdY = 250;
             double padding = 10;
@@ -284,7 +292,7 @@ namespace ripple
             _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
             _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
             _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
-            
+
             UpdateVisibility();
             UpdateTimeline();
         }
