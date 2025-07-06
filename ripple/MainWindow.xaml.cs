@@ -1,11 +1,11 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
-using Windows.Media;
-using Windows.Media.Control;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Windows.Media.Control;
 
 namespace ripple
 {
@@ -15,13 +15,6 @@ namespace ripple
         private GlobalSystemMediaTransportControlsSessionManager? _sessionManager;
         private GlobalSystemMediaTransportControlsSession? _currentSession;
         private GlobalSystemMediaTransportControlsSessionPlaybackControls? _controls;
-
-        // Controls
-        private bool _shuffleEnabled;
-        private bool _skipPrevEnabled;
-        private bool _playPauseEnabled;
-        private bool _skipNextEnabled;
-        private bool _repeatEnabled;
 
         /*//Shuffle and Repeat states
         private bool _shuffleState;
@@ -223,15 +216,15 @@ namespace ripple
             SongTitleBox.FontSize = 12;
             SongArtistBox.FontSize = 11;
 
-            // Seeker
-            SeekerGrid.ColumnDefinitions.Clear();
+            // Timeline
+            TimelineGrid.ColumnDefinitions.Clear();
             ColumnDefinition col1 = new() { Width = new GridLength(50) };
             ColumnDefinition col2 = new() { Width = new GridLength(200) };
             ColumnDefinition col3 = new() { Width = new GridLength(50) };
-            SeekerGrid.ColumnDefinitions.Add(col1);
-            SeekerGrid.ColumnDefinitions.Add(col2);
-            SeekerGrid.ColumnDefinitions.Add(col3);
-            Seeker.Width = 200;
+            TimelineGrid.ColumnDefinitions.Add(col1);
+            TimelineGrid.ColumnDefinitions.Add(col2);
+            TimelineGrid.ColumnDefinitions.Add(col3);
+            TimelineBar.Width = 200;
         }
 
         private void Small_Click(object sender, RoutedEventArgs e)
@@ -262,15 +255,15 @@ namespace ripple
             SongTitleBox.FontSize = 14;
             SongArtistBox.FontSize = 12;
 
-            // Seeker
-            SeekerGrid.ColumnDefinitions.Clear();
+            // TimelineBar
+            TimelineGrid.ColumnDefinitions.Clear();
             ColumnDefinition col1 = new() { Width = new GridLength(50) };
             ColumnDefinition col2 = new() { Width = new GridLength(250) };
             ColumnDefinition col3 = new() { Width = new GridLength(50) };
-            SeekerGrid.ColumnDefinitions.Add(col1);
-            SeekerGrid.ColumnDefinitions.Add(col2);
-            SeekerGrid.ColumnDefinitions.Add(col3);
-            Seeker.Width = 250;
+            TimelineGrid.ColumnDefinitions.Add(col1);
+            TimelineGrid.ColumnDefinitions.Add(col2);
+            TimelineGrid.ColumnDefinitions.Add(col3);
+            TimelineBar.Width = 250;
         }
 
         // Playback Events
@@ -377,8 +370,8 @@ namespace ripple
             if (_currentSession == null) return;
 
             var timeline = _currentSession.GetTimelineProperties();
-            Seeker.Minimum = timeline.StartTime.TotalSeconds;
-            Seeker.Maximum = timeline.EndTime.TotalSeconds;
+            TimelineBar.Minimum = timeline.StartTime.TotalSeconds;
+            TimelineBar.Maximum = timeline.EndTime.TotalSeconds;
         }
 
         private void UpdateTimelinePosition()
@@ -389,10 +382,10 @@ namespace ripple
             double rate = _currentSession.GetPlaybackInfo().PlaybackRate ?? 1.00;
             double elapsed = (DateTimeOffset.Now - timeline.LastUpdatedTime).TotalSeconds * rate;
             double pos = timeline.Position.TotalSeconds + elapsed;
-            pos = Math.Clamp(pos, Seeker.Minimum, Seeker.Maximum);
+            pos = Math.Clamp(pos, TimelineBar.Minimum, TimelineBar.Maximum);
 
             // Update UI elements
-            Seeker.Value = pos;
+            TimelineBar.Value = pos;
 
             SongStartMin.Text = ((int)pos / 60).ToString("D2");
             SongStartSec.Text = ((int)pos % 60).ToString("D2");

@@ -78,37 +78,6 @@
             <Setter Property="Height" Value="20" />
             <Setter Property="Foreground" Value="GhostWhite" />
         </Style>
-
-        <!--Slider Style-->
-        <!--<Style x:Key="SeekerStyle2" TargetType="Slider">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid>
-                            <Border x:Name="TrackBackground"
-                            Height="4"
-                            Background="#444"
-                            CornerRadius="2"
-                            VerticalAlignment="Center"/>
-
-                            <Rectangle x:Name="ProgressFill"
-                               Height="4"
-                               Fill="White"
-                               HorizontalAlignment="Left"
-                               VerticalAlignment="Center"
-                               RadiusX="2" RadiusY="2"
-                               Width="50"/>
-
-                            <Thumb x:Name="PART_TrackThumb"
-                           Width="10" Height="20"
-                           Background="White"
-                           BorderThickness="0"
-                           VerticalAlignment="Center"/>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>-->
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
@@ -181,35 +150,11 @@
         </Border>
 
 
-        <!--Seeker-->
+        <!--Timeline-->
         <Border Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
                 Background="#1a1a1a" BorderThickness="0" BorderBrush="Black" CornerRadius="0"
                 >
-            <!--<StackPanel HorizontalAlignment="Center"  Orientation="Horizontal">
-                <TextBlock x:Name="SongStartMin" Text="0"/>
-                <TextBlock Text=":"/>
-                <TextBlock x:Name="SongStartSec" Text="00"/>
-                <Slider Style="{DynamicResource SeekerStyle2}" 
-                    x:Name="Seeker"
-                    ValueChanged="Seeker_ValueChanged"
-                    Width="225"
-                    Thumb.DragStarted="Seeker_DragStarted"
-                    Thumb.DragCompleted="Seeker_DragCompleted"
-                    />-->
-            <!--
-                <ProgressBar x:Name="Seeker"
-                             Width="200"
-                             Height="4"
-                             VerticalAlignment="Center"
-                             Background="#57565b"
-                             Foreground="#b88864"
-                             />
-                <TextBlock x:Name="SongEndMin" Text="0"/>
-                <TextBlock Text=":"/>
-                <TextBlock x:Name="SongEndSec" Text="00"/>
-
-            </StackPanel>-->
-            <Grid x:Name="SeekerGrid" HorizontalAlignment="Center">
+            <Grid x:Name="TimelineGrid" HorizontalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="50" />
                     <ColumnDefinition Width="200" />
@@ -224,14 +169,7 @@
                     <TextBlock x:Name="SongStartSec" Text="00"/>
                 </StackPanel>
 
-                <!--<Slider Style="{DynamicResource SeekerStyle2}" 
-                    x:Name="Seeker"
-                    ValueChanged="Seeker_ValueChanged"
-                    Width="225"
-                    Thumb.DragStarted="Seeker_DragStarted"
-                    Thumb.DragCompleted="Seeker_DragCompleted"
-                    />-->
-                <ProgressBar x:Name="Seeker"
+                <ProgressBar x:Name="TimelineBar"
                              Grid.Column="1"
                              Width="200"
                              Height="4"
@@ -254,7 +192,6 @@
         <Border Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
                     Background="#57565b" BorderThickness="0" BorderBrush="Black"
                     >
-            <!--Playback buttons-->
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <!--<Button x:Name="ShuffleButton" Style="{StaticResource IconButtonStyle}" Click="ShuffleButton_Click" Cursor="Hand">
                     <fa:ImageAwesome x:Name="ShuffleButtonIcon" Icon="Random" Style="{StaticResource SmallIconStyle}" />
