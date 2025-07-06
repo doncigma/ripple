@@ -285,14 +285,15 @@ namespace ripple
             }
 
             var newSession = sender.GetCurrentSession()
-                ?? throw new Exception("Could not get media session");
+                ?? throw new Exception("Could not get media session. MainWindow.xaml.cs:OnCurrentSessionChanged()");
+
             _currentSession = newSession;
             _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
             _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
             _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
-            UpdateTimelinePosition();
-
+            
             UpdateVisibility();
+            UpdateTimeline();
         }
 
         private void OnMediaPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, MediaPropertiesChangedEventArgs args)
@@ -301,15 +302,14 @@ namespace ripple
             {
                 try
                 {
-                    var mediaProperties = await sender.TryGetMediaPropertiesAsync();
-                    if (mediaProperties != null)
+                    var mediaProperties = await sender.TryGetMediaPropertiesAsync()
+                        ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:OnMediaPropertiesChanged()");
+
+                    await Dispatcher.InvokeAsync(() =>
                     {
-                        Dispatcher.Invoke(() =>
-                        {
-                            SongTitleBox.Text = mediaProperties.Title;
-                            SongArtistBox.Text = mediaProperties.Artist;
-                        });
-                    }
+                        SongTitleBox.Text = mediaProperties.Title;
+                        SongArtistBox.Text = mediaProperties.Artist;
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -317,8 +317,6 @@ namespace ripple
                 }
             }
             _ = AsyncWorker();
-
-            UpdateVisibility();
         }
 
         private void OnPlaybackInfoChanged(GlobalSystemMediaTransportControlsSession sender, PlaybackInfoChangedEventArgs args)
@@ -335,7 +333,7 @@ namespace ripple
                     _controls = playbackInfo.Controls;
 
                     // Media properties
-                    var mediaProperties = sender.TryGetMediaPropertiesAsync().GetResults()
+                    var mediaProperties = await sender.TryGetMediaPropertiesAsync()
                         ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:OnPlaybackInfoChanged()");
 
                     FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
