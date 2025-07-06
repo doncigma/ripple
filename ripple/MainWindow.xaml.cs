@@ -1,11 +1,11 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
-using Windows.Media;
-using Windows.Media.Control;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Windows.Media.Control;
 
 namespace ripple
 {
