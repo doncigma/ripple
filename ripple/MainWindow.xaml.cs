@@ -1,9 +1,12 @@
-﻿using System.Windows;
+﻿using System.Drawing;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Windows.Media.Control;
 
@@ -63,6 +66,23 @@ namespace ripple
                     var mediaProperties = await _currentSession.TryGetMediaPropertiesAsync()
                         ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:MainWindow()");
 
+                    var thumbVis = Visibility.Visible;
+                    var thumbnail = mediaProperties.Thumbnail;
+                    if (thumbnail != null)
+                    {
+                        var stream = await thumbnail.OpenReadAsync();
+
+                        var image = new BitmapImage();
+                        image.BeginInit();
+                        image.StreamSource = stream.AsStream();
+                        image.CacheOption = BitmapCacheOption.OnLoad;
+                        image.EndInit();
+                        image.Freeze();
+
+                        Dispatcher.Invoke(() => { MediaThumbnail.Source = image; });
+                    }
+                    else thumbVis = Visibility.Hidden;
+
                     // Setup icons
                     FontAwesome.WPF.FontAwesomeIcon icon = FontAwesome.WPF.FontAwesomeIcon.None;
                     if (playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
@@ -71,10 +91,10 @@ namespace ripple
 
                     Dispatcher.Invoke(() =>
                     {
+                        MediaThumbnail.Visibility = thumbVis;
                         SongTitleBox.Text = mediaProperties.Title;
                         SongArtistBox.Text = mediaProperties.Artist;
                         TogglePlayButtonIcon.Icon = icon;
-                        MediaThumbnail = mediaProperties.Thumbnail;
                     });
                 }
                 catch (Exception ex)
@@ -306,10 +326,28 @@ namespace ripple
                 try
                 {
                     var mediaProperties = await sender.TryGetMediaPropertiesAsync()
-                        ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:OnMediaPropertiesChanged()");
+                        ?? throw new Exception("Could not get media properties. MainWindow.xaml.cs:UpdateMediaProps()");
+
+                    var thumbVis = Visibility.Visible;
+                    var thumbnail = mediaProperties.Thumbnail;
+                    if (thumbnail != null)
+                    {
+                        var stream = await thumbnail.OpenReadAsync();
+
+                        var image = new BitmapImage();
+                        image.BeginInit();
+                        image.StreamSource = stream.AsStream();
+                        image.CacheOption = BitmapCacheOption.OnLoad;
+                        image.EndInit();
+                        image.Freeze();
+
+                        Dispatcher.Invoke(() => { MediaThumbnail.Source = image; });
+                    }
+                    else thumbVis = Visibility.Hidden;
 
                     await Dispatcher.InvokeAsync(() =>
                     {
+                        MediaThumbnail.Visibility = thumbVis;
                         SongTitleBox.Text = mediaProperties.Title;
                         SongArtistBox.Text = mediaProperties.Artist;
                     });
