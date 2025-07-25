@@ -196,10 +196,6 @@
                     Background="#57565b" BorderThickness="0" BorderBrush="Black"
                     >
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <!--<Button x:Name="ShuffleButton" Style="{StaticResource IconButtonStyle}" Click="ShuffleButton_Click" Cursor="Hand">
-                    <fa:ImageAwesome x:Name="ShuffleButtonIcon" Icon="Random" Style="{StaticResource SmallIconStyle}" />
-                </Button>-->
-
                 <Button x:Name="SkipPreviousButton" Style="{StaticResource IconButtonStyle}" Click="SkipPreviousButton_Click" Cursor="Hand">
                     <fa:ImageAwesome x:Name="SkipPreviousButtonIcon" Icon="StepBackward" Style="{StaticResource SmallIconStyle}" />
                 </Button>
@@ -211,10 +207,6 @@
                 <Button x:Name="SkipNextButton" Style="{StaticResource IconButtonStyle}" Click="SkipNextButton_Click" Cursor="Hand">
                     <fa:ImageAwesome x:Name="SkipNextButtonIcon" Icon="StepForward" Style="{StaticResource SmallIconStyle}" />
                 </Button>
-
-                <!--<Button x:Name="RepeatButton" Style="{StaticResource IconButtonStyle}" Click="RepeatButton_Click" Cursor="Hand">
-                    <fa:ImageAwesome x:Name="RepeatButtonIcon" Icon="Refresh" Style="{StaticResource SmallIconStyle}" />
-                </Button> -->
             </StackPanel>
         </Border>
     </Grid>

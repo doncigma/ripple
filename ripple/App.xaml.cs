@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace ripplet
+namespace ripple
 {
     /// <summary>
     /// Interaction logic for App.xaml

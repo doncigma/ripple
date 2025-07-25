@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -17,10 +16,6 @@ namespace ripple
         // Manager and session
         private GlobalSystemMediaTransportControlsSessionManager? _sessionManager;
         private GlobalSystemMediaTransportControlsSession? _currentSession;
-
-        /*//Shuffle and Repeat states
-        private bool _shuffleState;
-        private MediaPlaybackAutoRepeatMode RepeatState { get; set; }*/
 
         // Timer to manually track song progress
         private readonly DispatcherTimer _songTimer;
@@ -54,7 +49,6 @@ namespace ripple
                 }
             }
             InitializeMediaSession();
-
         }
 
         // Window Controls
