@@ -179,7 +179,7 @@ namespace ripple
             MainGrid.RowDefinitions.Add(row4);
 
             // Title bar
-            SettingsMenu.Margin = new Thickness(0, 0, 0, 0);
+            SettingsMenu.Margin = new Thickness(5, 0, 0, 0);
             SettingsStack.Width = Width;
             WindowTitle.FontSize = 11;
             WindowTitle.Margin = new Thickness(5, 0, 0, 0);
