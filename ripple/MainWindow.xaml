@@ -147,7 +147,7 @@
                 <Image HorizontalAlignment="Center" x:Name="MediaThumbnail" Margin="0,2,5,2"/>
                 <StackPanel VerticalAlignment="Center" Orientation="Vertical">
                     <TextBlock HorizontalAlignment="Center" x:Name="SongTitleBox" FontFamily="Roboto Bold"
-                               Text="Title" Width="150" TextTrimming="CharacterEllipsis"/>
+                               Text="Title" TextTrimming="CharacterEllipsis" MaxWidth="150"/>
                     <TextBlock HorizontalAlignment="Center" x:Name="SongArtistBox" FontSize="11" Text="Artist" />
                 </StackPanel>
             </StackPanel>
