@@ -34,7 +34,7 @@ namespace ripple
 
         public async Task InitializeAsync()
         {
-            try
+            try 
             {
                 // Session manager
                 _sessionManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
