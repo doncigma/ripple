@@ -16,6 +16,64 @@ namespace ripple
         // Media manager
         private readonly RippleMediaManager _mediaManager;
 
+        private class Config
+        {
+            // Dimensions
+            public double windowHeight { get; set; } = 100;
+            public double windowWidth { get; set; } = 300;
+
+            // Sizes
+            public double smallFont { get; set; } = 11;
+            public double bigFont { get; set; } = 12;
+            public double margin { get; set; } = 5;
+            public double timestampSize { get; set; } = 50;
+
+            // Scales
+            public double thinBarScale { get; set; } = 0.2;
+            public double thickBarScale { get; set; } = 0.3;
+            public double timelineScale { get; set; } = 2.0 / 3.0;
+        }
+
+        private readonly Dictionary<string, Config> _configs = new()
+        {
+            ["Small"] = new Config
+            {
+                windowHeight = 100,
+                windowWidth = 300,
+                smallFont = 11,
+                bigFont = 12,
+                margin = 5,
+                timestampSize = 50,
+                thinBarScale = 0.2,
+                thickBarScale = 0.3,
+                timelineScale = 2.0 / 3.0
+            },
+            ["Medium"] = new Config
+            {
+                windowHeight = 125,
+                windowWidth = 325,
+                smallFont = 12,
+                bigFont = 13,
+                margin = 7,
+                timestampSize = 50,
+                thinBarScale = 0.2,
+                thickBarScale = 0.3,
+                timelineScale = 2.0 / 3.0
+            },
+            ["Large"] = new Config
+            {
+                windowHeight = 150,
+                windowWidth = 350,
+                smallFont = 12,
+                bigFont = 14,
+                margin = 10,
+                timestampSize = 50,
+                thinBarScale = 0.2,
+                thickBarScale = 0.3,
+                timelineScale = 2.0 / 3.0
+            }
+        };
+
         public MainWindow()
         {
             InitializeComponent();
@@ -37,6 +95,10 @@ namespace ripple
                 catch (Exception ex)
                 {
                     System.Windows.MessageBox.Show(ex.Message + " < InitializeManager()");
+                }
+                finally
+                {
+                    CheckDock();
                 }
             }
             _ = InitializeManager();
@@ -152,86 +214,61 @@ namespace ripple
             WindowState = WindowState.Minimized;
         }
 
-        private void Tiny_Click(object sender, RoutedEventArgs e)
+        private void Small_Click(object sender, RoutedEventArgs e)
         {
-            // Window
-            Height = 100;
-            Width = 300;
-
-            // Main grid
-            MainGrid.RowDefinitions.Clear();
-            RowDefinition row1 = new() { Height = new GridLength(20) };
-            RowDefinition row2 = new() { Height = new GridLength(30) };
-            RowDefinition row3 = new() { Height = new GridLength(20) };
-            RowDefinition row4 = new() { Height = new GridLength(30) };
-            MainGrid.RowDefinitions.Add(row1);
-            MainGrid.RowDefinitions.Add(row2);
-            MainGrid.RowDefinitions.Add(row3);
-            MainGrid.RowDefinitions.Add(row4);
-
-            // Title bar
-            SettingsMenu.Margin = new Thickness(0, 0, 0, 0);
-            SettingsStack.Width = Width;
-            WindowTitle.FontSize = 11;
-            WindowTitle.Margin = new Thickness(5, 0, 0, 0);
-            WindowControlsStack.Margin = new Thickness(0, 0, 5, 0);
-
-            // Metadata
-            SongTitleBox.FontSize = 12;
-            SongArtistBox.FontSize = 11;
-
-            // Timeline
-            TimelineGrid.ColumnDefinitions.Clear();
-            ColumnDefinition col1 = new() { Width = new GridLength(50) };
-            ColumnDefinition col2 = new() { Width = new GridLength(200) };
-            ColumnDefinition col3 = new() { Width = new GridLength(50) };
-            TimelineGrid.ColumnDefinitions.Add(col1);
-            TimelineGrid.ColumnDefinitions.Add(col2);
-            TimelineGrid.ColumnDefinitions.Add(col3);
-            TimelineBar.Width = 200;
-
+            ApplyWindowSizing(_configs["Small"]);
             CheckDock();
         }
 
-        private void Small_Click(object sender, RoutedEventArgs e)
+        private void Medium_Click(object sender, RoutedEventArgs e)
         {
-            // Window
-            Height = 150;
-            Width = 350;
-
-            // Main grid
-            MainGrid.RowDefinitions.Clear();
-            RowDefinition row1 = new() { Height = new GridLength(30) };
-            RowDefinition row2 = new() { Height = new GridLength(50) };
-            RowDefinition row3 = new() { Height = new GridLength(30) };
-            RowDefinition row4 = new() { Height = new GridLength(40) };
-            MainGrid.RowDefinitions.Add(row1);
-            MainGrid.RowDefinitions.Add(row2);
-            MainGrid.RowDefinitions.Add(row3);
-            MainGrid.RowDefinitions.Add(row4);
-
-            // Title bar
-            SettingsMenu.Margin = new Thickness(10, 0, 10, 0);
-            SettingsStack.Width = Width;
-            WindowTitle.FontSize = 12;
-            WindowTitle.Margin = new Thickness(0, 0, 0, 0);
-            WindowControlsStack.Margin = new Thickness(0, 0, 10, 0);
-
-            // Metadata
-            SongTitleBox.FontSize = 14;
-            SongArtistBox.FontSize = 12;
-
-            // TimelineBar
-            TimelineGrid.ColumnDefinitions.Clear();
-            ColumnDefinition col1 = new() { Width = new GridLength(50) };
-            ColumnDefinition col2 = new() { Width = new GridLength(250) };
-            ColumnDefinition col3 = new() { Width = new GridLength(50) };
-            TimelineGrid.ColumnDefinitions.Add(col1);
-            TimelineGrid.ColumnDefinitions.Add(col2);
-            TimelineGrid.ColumnDefinitions.Add(col3);
-            TimelineBar.Width = 250;
-
+            ApplyWindowSizing(_configs["Medium"]);
             CheckDock();
+        }
+
+        private void Large_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyWindowSizing(_configs["Large"]);
+            CheckDock();
+        }
+
+        private void ApplyWindowSizing(Config config)
+        {
+            var thinBar = config.windowHeight * config.thinBarScale;
+            var thickBar = config.windowHeight * config.thickBarScale;
+            var timelineBar = config.windowWidth * config.timelineScale;
+            var margin = config.margin;
+            var timestamp = config.timestampSize;
+
+            Dispatcher.Invoke(() =>
+            {
+                Height = config.windowHeight;
+                Width = config.windowWidth;
+
+                MainGrid.RowDefinitions.Clear();
+                MainGrid.RowDefinitions.Add(new() { Height = new GridLength(thinBar) });
+                MainGrid.RowDefinitions.Add(new() { Height = new GridLength(thickBar) });
+                MainGrid.RowDefinitions.Add(new() { Height = new GridLength(thinBar) });
+                MainGrid.RowDefinitions.Add(new() { Height = new GridLength(thickBar) });
+
+                // Title bar
+                SettingsMenu.Margin = new Thickness(margin, 0, 0, 0);
+                SettingsStack.Width = Width;
+                WindowTitle.FontSize = config.smallFont;
+                WindowTitle.Margin = new Thickness(margin, 0, 0, 0);
+                WindowControlsStack.Margin = new Thickness(0, 0, margin, 0);
+
+                // Metadata
+                SongTitleBox.FontSize = config.bigFont;
+                SongArtistBox.FontSize = config.smallFont;
+
+                // Timeline
+                TimelineGrid.ColumnDefinitions.Clear();
+                TimelineGrid.ColumnDefinitions.Add(new() { Width = new GridLength(timestamp) });
+                TimelineGrid.ColumnDefinitions.Add(new() { Width = new GridLength(timelineBar) });
+                TimelineGrid.ColumnDefinitions.Add(new() { Width = new GridLength(timestamp) });
+                TimelineBar.Width = timelineBar;
+            });
         }
 
         // Playback Events

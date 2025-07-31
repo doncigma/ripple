@@ -113,10 +113,10 @@
                         </Viewbox>
                     </MenuItem.Icon>
 
-                    <!--Size One-->
-                    <Button x:Name="Tiny" Content="Tiny" Foreground="Black" Click="Tiny_Click" />
-                    <!--Size Two-->
-                    <Button x:Name="Mini" Content="Small" Foreground="Black" Click="Small_Click" />
+                    <!--Size Options-->
+                    <Button Content="Small" Foreground="Black" Click="Small_Click" />
+                    <Button Content="Medium" Foreground="Black" Click="Medium_Click" />
+                    <Button Content="Large" Foreground="Black" Click="Large_Click" />
                 </MenuItem>
             </Menu>
 
