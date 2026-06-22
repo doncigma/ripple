@@ -3,5 +3,4 @@ If you like to have media open while you're working, whether it be music, videos
 It's in the background, a tiny ripple in your workflow.
 
 Temporary for those who want to test it out:
-To use:
   * Simply copy the repo, navigate to Ripple/bin/ and run ripple.exe.
