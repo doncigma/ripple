@@ -4,4 +4,4 @@ It's in the background, a tiny ripple in your workflow.
 
 Temporary for those who want to test it out:
 To use:
-  * Simply copy the reop, navigate to the "Ripple/bin" folder and click ripple.exe.
+  * Simply copy the repo, navigate to Ripple/bin/ and run ripple.exe.
